@@ -87,21 +87,39 @@ export const useChatStore = create((set , get) =>({
     }
   },
 
+  // subscribeToMessages: () => {
+  //   const { selectedUser } = get();
+  //   if (!selectedUser) return;
+
+  //   const socket = useAuthStore.getState().socket;
+
+  //   socket.on("newMessage", (newMessage) => {
+  //     const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
+  //     if (!isMessageSentFromSelectedUser) return;
+
+  //     const currentMessages = get().messages;
+  //     set({ messages: [...currentMessages, newMessage] });
+
+  //   });
+  // },
+
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
+  const socket = useAuthStore.getState().socket;
 
-    const socket = useAuthStore.getState().socket;
+  socket.off("newMessage");
 
-    socket.on("newMessage", (newMessage) => {
-      const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
-      if (!isMessageSentFromSelectedUser) return;
+  socket.on("newMessage", (newMessage) => {
+    const { selectedUser, messages } = get();
 
-      const currentMessages = get().messages;
-      set({ messages: [...currentMessages, newMessage] });
-
-    });
-  },
+    if (
+      selectedUser &&
+      (newMessage.senderId === selectedUser._id ||
+       newMessage.receiverId === selectedUser._id)
+    ) {
+      set({ messages: [...messages, newMessage] });
+    }
+  });
+},
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
